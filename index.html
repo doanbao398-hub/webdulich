@@ -441,6 +441,8 @@
           <video id="main-video" playsinline webkit-playsinline></video>
           <audio id="main-audio" preload="auto"></audio>
           <audio id="qr-audio" preload="auto"></audio>
+          <!-- Khai báo sẵn thẻ Nhạc Nền để tránh bị Zalo thu hồi bộ nhớ -->
+          <audio id="bg-music" loop preload="auto"></audio>
         </div>
 
         <!-- Tiêu đề nổi góc trên -->
@@ -605,6 +607,7 @@
       const mainVideo = document.getElementById("main-video");
       const mainAudio = document.getElementById("main-audio");
       const qrAudio = document.getElementById("qr-audio");
+      const bgMusic = document.getElementById("bg-music");
       const stepIndicatorEl = document.getElementById("step-indicator");
       const branchTitleEl = document.getElementById("branch-title");
       const qrOverlay = document.getElementById("qr-overlay");
@@ -633,19 +636,24 @@
       }
 
       function enterMainJourney() {
-        const bgMusic = document.createElement("audio");
-        bgMusic.src = BASE_URL + "nhacnen.mp3";
-        bgMusic.loop = true;
-        bgMusic.volume = 0.2; // Chỉnh âm lượng nhỏ lại để không lấn át giọng đọc
-        bgMusic.play().catch((e) => console.log("Nhạc nền bị chặn autoplay"));
         currentBranchId = 1;
         currentStepIndex = -1;
         switchScreen("player-screen");
+
+        // Phát nhạc nền từ thẻ HTML cố định
+        bgMusic.src = BASE_URL + "nhacnen.mp3";
+        bgMusic.volume = 0.2; // Âm lượng nhỏ 20% giúp tôn giọng đọc
+        bgMusic.play().catch((e) => {
+          console.log("Nhạc nền bị Zalo chặn autoplay:", e);
+        });
+
         playCurrentStep();
       }
 
       function goToReadyScreen() {
         stopAllMedia();
+        bgMusic.pause();
+        bgMusic.currentTime = 0;
         switchScreen("ready-screen");
       }
 
@@ -697,11 +705,11 @@
 
           mainAudio.src = stepData.audio;
           mainVideo.src = stepData.video;
-          mainVideo.loop = true; // Cho phép video loop mượt cho đến khi Audio kết thúc
+          mainVideo.loop = true; // Video lặp cho đến khi Audio đọc xong
 
           attemptPlayMedia(mainVideo, mainAudio);
 
-          // Sự kiện: Khi GIỌNG ĐỌC kết thúc thì tự chuyển slide kế tiếp (Tối ưu nhất cho mobile)
+          // Khi GIỌNG ĐỌC kết thúc thì tự chuyển sang slide tiếp theo
           mainAudio.onended = () => {
             mainVideo.pause();
             mainVideo.style.opacity = "0";
@@ -742,17 +750,20 @@
         if (videoEl && videoEl.src) promises.push(videoEl.play());
         if (audioEl && audioEl.src) promises.push(audioEl.play());
 
+        // Đảm bảo phát tiếp nhạc nền nếu bị ngắt
+        if (bgMusic && bgMusic.paused) {
+          bgMusic.play().catch(() => {});
+        }
+
         Promise.all(promises).catch((err) => {
-          console.warn(
-            "Autoplay bị trình duyệt chặn, mở Overlay thủ công:",
-            err,
-          );
+          console.warn("Autoplay bị trình duyệt chặn, mở Overlay thủ công:", err);
           tapOverlay.style.display = "flex";
         });
       }
 
       function manualResumePlay() {
         tapOverlay.style.display = "none";
+        if (bgMusic && bgMusic.paused) bgMusic.play().catch(() => {});
         if (mainVideo.src) mainVideo.play().catch(() => {});
         if (mainAudio.src) mainAudio.play().catch(() => {});
       }
