@@ -275,38 +275,6 @@
         box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
       }
 
-      /* Nút chạm phát hỗ trợ Autoplay bị chặn trên Mobile */
-      .tap-to-play-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100dvh;
-        background: rgba(7, 11, 20, 0.85);
-        backdrop-filter: blur(8px);
-        z-index: 40;
-        display: none;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 15px;
-      }
-
-      .tap-play-btn {
-        background: linear-gradient(135deg, #10b981, #059669);
-        color: white;
-        border: none;
-        padding: 14px 28px;
-        border-radius: 50px;
-        font-weight: 700;
-        font-size: 1rem;
-        cursor: pointer;
-        box-shadow: 0 10px 25px rgba(16, 185, 129, 0.5);
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-
       /* 4. Overlay Mã QR linh hoạt */
       .qr-overlay {
         position: absolute;
@@ -462,13 +430,6 @@
           </button>
         </div>
 
-        <!-- OVERLAY CHẶN AUTOPLAY (Dừng hẳn chờ bấm mới chạy) -->
-        <div class="tap-to-play-overlay" id="tap-overlay">
-          <button class="tap-play-btn" onclick="manualResumePlay()">
-            <i class="fa-solid fa-circle-play"></i> Bấm để xem tiếp
-          </button>
-        </div>
-
         <!-- OVERLAY MÃ QR -->
         <div class="qr-overlay" id="qr-overlay">
           <div class="qr-box-center">
@@ -530,15 +491,15 @@
           steps: [
             {
               video: BASE_URL + "nhanh2p1.mp4",
-              audio: BASE_URL + "voicenhanh2p1.mp3", // Sửa thành .mp3 chữ thường
+              audio: BASE_URL + "voicenhanh2p1.mp3",
             },
             {
               video: BASE_URL + "nhanh2p2.mp4",
-              audio: BASE_URL + "voicenhanh2p2.mp3", // Sửa thành .mp3 chữ thường
+              audio: BASE_URL + "voicenhanh2p2.mp3",
             },
             {
               video: BASE_URL + "nhanh2p3.mp4",
-              audio: BASE_URL + "voicenhanh2p3.mp3", // Sửa thành .mp3 chữ thường
+              audio: BASE_URL + "voicenhanh2p3.mp3",
             },
           ],
         },
@@ -576,7 +537,7 @@
             },
             {
               video: BASE_URL + "nhanh4p2.mp4",
-              audio: BASE_URL + "voicenhanh4p2.mp3", // Sửa thành .mp3 chữ thường
+              audio: BASE_URL + "voicenhanh4p2.mp3",
             },
             {
               video: BASE_URL + "nhanh4p3.mp4",
@@ -600,16 +561,12 @@
       const qrNextBtn = document.getElementById("qr-next-btn");
       const qrImg = document.getElementById("qr-img");
       const formLinkA = document.getElementById("form-link-a");
-      const tapOverlay = document.getElementById("tap-overlay");
 
       function startIntro() {
         switchScreen("intro-screen");
         introVideo.src = BASE_URL + "intro.mp4";
         introVideo.currentTime = 0;
-
-        introVideo.play().catch(() => {
-          tapOverlay.style.display = "flex";
-        });
+        introVideo.play().catch(() => {});
 
         introVideo.onended = () => {
           enterMainJourney();
@@ -658,7 +615,6 @@
 
       function playCurrentStep() {
         stopAllMedia();
-        tapOverlay.style.display = "none";
 
         mainVideo.style.opacity = "0";
         setTimeout(() => {
@@ -673,14 +629,7 @@
           mainAudio.src = "";
           mainVideo.src = branchData[currentBranchId].aiVideo;
           mainVideo.loop = false;
-
-          const playPromise = mainVideo.play();
-          if (playPromise !== undefined) {
-            playPromise.catch(() => {
-              mainVideo.pause();
-              tapOverlay.style.display = "flex";
-            });
-          }
+          mainVideo.play().catch(() => {});
 
           mainVideo.onended = () => {
             mainVideo.style.opacity = "0";
@@ -697,15 +646,9 @@
           mainVideo.src = stepData.video;
           mainVideo.loop = true;
 
-          const pVideo = mainVideo.play();
-          const pAudio = mainAudio.play();
-
-          Promise.all([pVideo, pAudio]).catch(() => {
-            // Khi bị chặn: Pause dừng lại ngay, hiện nút bấm chờ tương tác
-            mainVideo.pause();
-            mainAudio.pause();
-            tapOverlay.style.display = "flex";
-          });
+          // Phát đồng thời video và giọng đọc vì đã có cú click vào nút chuyển nhánh/bắt đầu
+          mainVideo.play().catch(() => {});
+          mainAudio.play().catch(() => {});
 
           mainAudio.onended = () => {
             mainVideo.pause();
@@ -739,24 +682,13 @@
         }
       }
 
-      function manualResumePlay() {
-        tapOverlay.style.display = "none";
-        if (bgMusic && bgMusic.paused) bgMusic.play().catch(() => {});
-        
-        mainVideo.currentTime = 0;
-        mainAudio.currentTime = 0;
-        
-        mainVideo.play().catch(() => {});
-        mainAudio.play().catch(() => {});
-      }
-
       function nextBranch() {
         qrAudio.pause();
         qrAudio.currentTime = 0;
         if (currentBranchId < 4) {
           currentBranchId++;
           currentStepIndex = -1;
-          playCurrentStep();
+          playCurrentStep(); // Cú click vào nút này đã kích hoạt audio/video chạy ph băng băng!
         } else {
           goToReadyScreen();
         }
