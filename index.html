@@ -530,15 +530,15 @@
           steps: [
             {
               video: BASE_URL + "nhanh2p1.mp4",
-              audio: BASE_URL + "voicenhanh2p1.MP3",
+              audio: BASE_URL + "voicenhanh2p1.mp3", // Sửa thành .mp3 chữ thường
             },
             {
               video: BASE_URL + "nhanh2p2.mp4",
-              audio: BASE_URL + "voicenhanh2p2.MP3",
+              audio: BASE_URL + "voicenhanh2p2.mp3", // Sửa thành .mp3 chữ thường
             },
             {
               video: BASE_URL + "nhanh2p3.mp4",
-              audio: BASE_URL + "voicenhanh2p3.MP3",
+              audio: BASE_URL + "voicenhanh2p3.mp3", // Sửa thành .mp3 chữ thường
             },
           ],
         },
@@ -576,7 +576,7 @@
             },
             {
               video: BASE_URL + "nhanh4p2.mp4",
-              audio: BASE_URL + "voicenhanh4p2.MP3",
+              audio: BASE_URL + "voicenhanh4p2.mp3", // Sửa thành .mp3 chữ thường
             },
             {
               video: BASE_URL + "nhanh4p3.mp4",
@@ -658,7 +658,7 @@
 
       function playCurrentStep() {
         stopAllMedia();
-        tapOverlay.style.display = "none"; // Ẩn nút bấm đi trước khi load
+        tapOverlay.style.display = "none";
 
         mainVideo.style.opacity = "0";
         setTimeout(() => {
@@ -674,12 +674,11 @@
           mainVideo.src = branchData[currentBranchId].aiVideo;
           mainVideo.loop = false;
 
-          // Thử chạy, nếu bị chặn thì PAUSE LẠI NGAY và hiện nút bấm
           const playPromise = mainVideo.play();
           if (playPromise !== undefined) {
             playPromise.catch(() => {
               mainVideo.pause();
-              tapOverlay.style.display = "flex"; // Hiện nút bấm
+              tapOverlay.style.display = "flex";
             });
           }
 
@@ -698,12 +697,11 @@
           mainVideo.src = stepData.video;
           mainVideo.loop = true;
 
-          // Gán nguồn xong nhưng ĐỢI, gọi lệnh play đồng thời
           const pVideo = mainVideo.play();
           const pAudio = mainAudio.play();
 
           Promise.all([pVideo, pAudio]).catch(() => {
-            // Nếu bị trình duyệt/Zalo chặn: Dừng hẳn cả hai lại, hiện nút chờ người dùng bấm
+            // Khi bị chặn: Pause dừng lại ngay, hiện nút bấm chờ tương tác
             mainVideo.pause();
             mainAudio.pause();
             tapOverlay.style.display = "flex";
@@ -741,7 +739,6 @@
         }
       }
 
-      // Khi người dùng bấm nút "Bấm để xem tiếp" -> Tua lại từ đầu slide đó và phát chuẩn xác
       function manualResumePlay() {
         tapOverlay.style.display = "none";
         if (bgMusic && bgMusic.paused) bgMusic.play().catch(() => {});
